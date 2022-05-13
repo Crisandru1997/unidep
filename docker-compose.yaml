@@ -1,0 +1,40 @@
+#ponemos la version
+version: "3"
+#declaramos los servicios que vamos a usar
+#servicios son los que estan en databases q estan en settings.py
+
+services:
+  db_localhost:
+    #Esto define la imagen y la version de postgres que vamos a usar
+    image: postgres:11.5
+    #Si queremos q nuestra data no se pierda cada vez q el contenedor caiga, definimos un volumen
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    #Definir unidep_app, coincide con local.conf
+  unidep_app:
+    build: .
+    volumes:
+        #para que acceda a los archivos estaticos
+      - static:/code/static
+      - .:/code
+    depends_on:
+      - db_localhost
+  #definimos el servicio nginx
+  nginx:
+    image: nginx:1.13
+    ports:
+    #el 80 es el puerto del contenedor y el 8000 el puerto de la maquina fisica
+      - 8000:80
+    #vamos hacer q nuestro archivo de configuracion apunte a la carpeta de donde nginx pide las config. x defecto
+    volumes:
+      - ./config/nginx/conf.d:/etc/nginx/conf.d 
+      - static:/code/static
+    #Ahora lo ultimo que tenemos que hacer es declaraar los volumenes
+    depends_on:
+      - unidep_app
+volumes:
+  .:
+  postgres_data:
+  static:
+  #Con esto ya tenemos configurado Docker para que nos levante nuestra aplicacion 
+  #antes de iniciar la aplicacion, asegurarse de que el servicio docker se este ejecutando
